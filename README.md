@@ -84,11 +84,6 @@ Double-click `uninstall_service.bat`. This will:
 
 Your `.env` file, logs, and source files are left untouched — delete the project folder yourself if you want those gone too.
 
-## How it works
-
-1. `proton.py` tails ProtonVPN's log file and yields the forwarded port whenever a new `Port pair` line is written, while also checking the ProtonVPN service's status.
-2. `main.py` compares the current qBittorrent listen port against the latest Proton-forwarded port, and pushes an update via `qbit.py` when they differ.
-3. Connection issues (dropped qBittorrent session, log file rotation, VPN disconnects) are handled and retried automatically rather than crashing the service.
 
 ## License
 
