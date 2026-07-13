@@ -25,7 +25,9 @@ ProtonVPN periodically rotates the forwarded port it assigns you (roughly once a
 ### Automated (recommended)
 
 1. Download or clone this repository.
-2. Double-click `setup_service.bat`.
+2. Run as **administrator** `install.ps1`.
+3. Fill out your info in .env
+4. use `start_service.ps1` and `stop_service.ps1` scripts
 
 This will:
 - Create a Python virtual environment (`.venv`) in the project folder
@@ -63,7 +65,7 @@ All configuration lives in a `.env` file in the project root:
 
 ## Running
 
-- **As a background service (recommended):** handled automatically by `setup_service.bat` — the task runs at logon using `pythonw.exe`, so no console window appears.
+- **As a background service (recommended):** handled automatically by `install.ps1` — the task runs at logon using `pythonw.exe`, so no console window appears.
 - **Manually, in a terminal:**
   ```bat
   .venv\Scripts\activate
@@ -77,7 +79,7 @@ Logs are written to the path set in `APP_LOG_PATH` (default: `portsync.log` in t
 
 ## Uninstalling
 
-Double-click `uninstall_service.bat`. This will:
+Double-click `uninstall.ps1`. This will:
 - Stop the scheduled task if it's currently running
 - Remove the scheduled task
 - Delete the `.venv` folder
