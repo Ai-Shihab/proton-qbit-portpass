@@ -1,3 +1,12 @@
+# --- Self-Elevate to Administrator ---
+$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+if (-not $isAdmin) {
+    Write-Host "Requesting Administrator privileges..."
+    Start-Process powershell.exe -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
+    Exit
+}
+# -------------------------------------
+
 $ErrorActionPreference = "Stop"
 
 # Get current script directory

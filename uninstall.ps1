@@ -1,3 +1,12 @@
+# --- Self-Elevate to Administrator ---
+$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+if (-not $isAdmin) {
+    Write-Host "Requesting Administrator privileges..."
+    Start-Process powershell.exe -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
+    Exit
+}
+# -------------------------------------
+
 $TaskName = "QbitProtonPortSync"
 $ProjectDir = $PSScriptRoot
 $VenvDir = Join-Path $ProjectDir ".venv"
@@ -25,8 +34,26 @@ if (Test-Path $VenvDir) {
     Write-Host "[skip] .venv folder not found."
 }
 
+# 3. Clean up generated files and build folders
+$ItemsToRemove = @(
+    "start_service.ps1",
+    "stop_service.ps1",
+    "build",
+    ".git",
+    "*.egg-info"
+)
+
+foreach ($Item in $ItemsToRemove) {
+    $TargetPath = Join-Path $ProjectDir $Item
+    if (Test-Path $TargetPath) {
+        Write-Host "[..] Deleting $Item..."
+        Remove-Item -Path $TargetPath -Recurse -Force -ErrorAction SilentlyContinue
+        Write-Host "[ok] $Item deleted."
+    }
+}
+
 Write-Host "`n=== Uninstall complete ==="
-Write-Host "Your .env file, portsync.log, and source files have been left untouched."
+Write-Host "Your .env file, portsync.log, and source code files have been left untouched."
 Write-Host "You can safely delete this entire project folder now if you wish."
 
 Write-Host "`nPress any key to exit..."
