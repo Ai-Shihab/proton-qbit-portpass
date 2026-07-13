@@ -86,5 +86,4 @@ Your `.env` file, logs, and source files are left untouched — delete the proje
 
 
 ## License
-
-Add a license of your choice here (e.g. MIT) if you plan to share this publicly.
+MIT
