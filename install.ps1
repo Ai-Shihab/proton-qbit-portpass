@@ -37,7 +37,8 @@ Write-Host "[..] Installing project and dependencies"
 Write-Host "[..] Registering scheduled task '$TaskName'"
 
 $PythonwExe = Join-Path $VenvDir "Scripts\pythonw.exe"
-$MainScript = Join-Path $ProjectDir "main.py"
+# FIX: Points to src\main.py instead of the root folder
+$MainScript = Join-Path $ProjectDir "src\main.py" 
 
 if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
     Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false
@@ -45,7 +46,7 @@ if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
 
 $Action = New-ScheduledTaskAction -Execute $PythonwExe -Argument "`"$MainScript`"" -WorkingDirectory $ProjectDir
 $Trigger = New-ScheduledTaskTrigger -AtLogOn
-$Settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -DontStopOnIdleEnd -ExecutionTimeLimit (New-TimeSpan -Days 0)
+$Settings = New-ScheduledTaskSettingsSet -Compatibility Win8 -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -DontStopOnIdleEnd -ExecutionTimeLimit (New-TimeSpan -Days 0)
 
 Register-ScheduledTask -TaskName $TaskName -Action $Action -Trigger $Trigger -Settings $Settings -Description "Syncs qBittorrent port with ProtonVPN" | Out-Null
 
