@@ -52,16 +52,20 @@ if errorlevel 1 (
     goto :error
 )
 
-REM --- 4. Register the scheduled task ---
-REM Runs via pythonw.exe (no console window), triggered at user logon
-REM rather than system startup so it starts after the user session
-REM (and Proton/qBittorrent) are actually up.
 set "PYTHONW_EXE=%VENV_DIR%\Scripts\pythonw.exe"
 set "MAIN_SCRIPT=%PROJECT_DIR%main.py"
+set "RUNNER_BAT=%PROJECT_DIR%_run_service.bat"
+
+echo [..] Writing task runner %RUNNER_BAT%
+(
+    echo @echo off
+    echo cd /d "%PROJECT_DIR%"
+    echo start "" "%PYTHONW_EXE%" "%MAIN_SCRIPT%"
+) > "%RUNNER_BAT%"
 
 echo [..] Registering scheduled task "%TASK_NAME%"
 schtasks /create /tn "%TASK_NAME%" ^
-    /tr "\"%PYTHONW_EXE%\" \"%MAIN_SCRIPT%\"" ^
+    /tr "\"%RUNNER_BAT%\"" ^
     /sc onlogon ^
     /rl limited ^
     /f

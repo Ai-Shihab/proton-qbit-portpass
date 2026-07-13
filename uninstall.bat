@@ -2,69 +2,92 @@
 setlocal
 
 REM ============================================================
-REM Uninstall script for qbit-proton-portsync
-REM   1. Removes the scheduled task
-REM   2. Deletes the venv folder
-REM   Does NOT touch .env or your source files.
+REM Setup script for qbit-proton-portsync
+REM   1. Creates a venv (if it doesn't already exist)
+REM   2. Activates it and installs the project + dependencies
+REM   3. Registers a scheduled task to run main.py silently at logon
 REM ============================================================
 
 set "PROJECT_DIR=%~dp0"
 set "VENV_DIR=%PROJECT_DIR%.venv"
 set "TASK_NAME=QbitProtonPortSync"
 
-echo === qbit-proton-portsync uninstall ===
+echo === qbit-proton-portsync setup ===
 echo Project dir: %PROJECT_DIR%
 echo.
 
-REM --- 1. Stop the task if it's currently running, then remove it ---
-schtasks /query /tn "%TASK_NAME%" >nul 2>&1
-if errorlevel 1 (
-    echo [skip] Scheduled task "%TASK_NAME%" not found, nothing to remove.
+REM --- 1. Create venv if missing ---
+if exist "%VENV_DIR%\Scripts\python.exe" (
+    echo [skip] venv already exists at %VENV_DIR%
 ) else (
-    echo [..] Stopping "%TASK_NAME%" if it's currently running
-    schtasks /end /tn "%TASK_NAME%" >nul 2>&1
-    REM /end returns an error if the task wasn't running - that's fine, ignore it.
-
-    echo [..] Removing scheduled task "%TASK_NAME%"
-    schtasks /delete /tn "%TASK_NAME%" /f
+    echo [..] Creating venv at %VENV_DIR%
+    python -m venv "%VENV_DIR%"
     if errorlevel 1 (
-        echo [error] Failed to delete the scheduled task. Try running this .bat as Administrator.
+        echo [error] Failed to create venv. Is Python installed and on PATH?
         goto :error
     )
-    echo [ok] Scheduled task removed
+)
+
+REM --- 2. Activate venv ---
+call "%VENV_DIR%\Scripts\activate.bat"
+if errorlevel 1 (
+    echo [error] Failed to activate venv.
+    goto :error
+)
+
+REM --- 3. Upgrade packaging tools and install the project ---
+echo [..] Upgrading pip, setuptools, wheel
+python -m pip install --upgrade pip setuptools wheel
+if errorlevel 1 (
+    echo [error] Failed to upgrade pip/setuptools/wheel.
+    goto :error
+)
+
+echo [..] Installing project and dependencies
+python -m pip install "%PROJECT_DIR%."
+if errorlevel 1 (
+    echo [error] pip install failed.
+    goto :error
+)
+
+set "PYTHONW_EXE=%VENV_DIR%\Scripts\pythonw.exe"
+set "MAIN_SCRIPT=%PROJECT_DIR%main.py"
+set "RUNNER_BAT=%PROJECT_DIR%_run_service.bat"
+
+echo [..] Writing task runner %RUNNER_BAT%
+(
+    echo @echo off
+    echo cd /d "%PROJECT_DIR%"
+    echo start "" "%PYTHONW_EXE%" "%MAIN_SCRIPT%"
+) > "%RUNNER_BAT%"
+
+echo [..] Registering scheduled task "%TASK_NAME%"
+schtasks /create /tn "%TASK_NAME%" ^
+    /tr "\"%RUNNER_BAT%\"" ^
+    /sc onlogon ^
+    /rl limited ^
+    /f
+
+if errorlevel 1 (
+    echo [error] Failed to create scheduled task. Try running this .bat as Administrator.
+    goto :error
 )
 
 echo.
-
-REM --- 2. Delete the venv ---
-REM Give Windows a moment to release the pythonw.exe process handle
-REM after schtasks /end above, otherwise rmdir can fail with "in use".
-timeout /t 2 /nobreak >nul
-
-if exist "%VENV_DIR%" (
-    echo [..] Removing venv at %VENV_DIR%
-    rmdir /s /q "%VENV_DIR%"
-    if exist "%VENV_DIR%" (
-        echo [error] Could not fully remove %VENV_DIR%.
-        echo         Make sure no python.exe / pythonw.exe from this venv is still running, then delete it manually.
-        goto :error
-    )
-    echo [ok] venv removed
-) else (
-    echo [skip] No venv found at %VENV_DIR%
-)
-
+echo === Setup complete ===
 echo.
-echo === Uninstall complete ===
+echo IMPORTANT: open .env in %PROJECT_DIR% and fill in
+echo   QBIT_USERNAME, QBIT_PASSWORD, and PROTON_LOG_PATH
+echo before the task next runs (or log off/on to trigger it now).
 echo.
-echo Note: .env, main.py, proton.py, qbit.py, and your logs were left untouched.
-echo Delete the project folder yourself if you want those gone too.
+echo To remove the scheduled task later:
+echo   schtasks /delete /tn "%TASK_NAME%" /f
 echo.
 pause
 exit /b 0
 
 :error
 echo.
-echo Uninstall finished with errors - see above.
+echo Setup failed - see the error above.
 pause
 exit /b 1
