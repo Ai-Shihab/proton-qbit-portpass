@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import logging
+import subprocess
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
@@ -10,7 +11,7 @@ import requests
 from dotenv import load_dotenv
 
 from proton import tail_proton_port, proton_status
-from qbit import ensure_logged_in, set_port, current_port
+from qbit import ensure_logged_in, set_port, current_port,restart_qbit
 
 # Load .env from the root directory
 env_path = Path(__file__).resolve().parent.parent / '.env'
@@ -36,7 +37,7 @@ def setup_logging(log_file):
 
 
 def check_env():
-    required = ["QBIT_USERNAME", "QBIT_PASSWORD", "PROTON_LOG_PATH"]
+    required = ["QBIT_USERNAME", "QBIT_PASSWORD", "PROTON_LOG_PATH","QBIT_PATH","RESTART_ENABLED"]
     missing = [v for v in required if not os.getenv(v)]
     if missing:
         raise SystemExit(f"Missing required .env values: {', '.join(missing)}")
@@ -54,7 +55,8 @@ def build_client():
 def main():
     check_env()
     log_path = os.getenv("PROTON_LOG_PATH")
-
+    restart_stat = os.getenv("RESTART_ENABLED", "false").lower() == "true"
+    qbit_path= os.getenv("QBIT_PATH")
     client = build_client()
     ensure_logged_in(client)
     log.info("Service started, watching %s", log_path)
@@ -65,7 +67,7 @@ def main():
             # Checking VPN status first, regardless of whether a port is configured
             if not proton_status():
                 log.warning("Proton service not running, skipping")
-                time.sleep(5)
+                time.sleep(30)
                 continue
 
             if event is None:
@@ -76,6 +78,9 @@ def main():
             try:
                 if current_port(client) != last_known_port:
                     set_port(client, last_known_port)
+                    time.sleep(5)
+                    if restart_stat:
+                        restart_qbit(client,qbit_path)
                 else:
                     log.info("Proton port: %s [Unchanged]", last_known_port)
                     time.sleep(15)

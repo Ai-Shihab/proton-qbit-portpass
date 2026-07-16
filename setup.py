@@ -12,6 +12,8 @@ ENV_PATH = ROOT / ".env"
 # project regardless of the working directory the service is launched from
 # (important once it's run via a scheduled task / pythonw.exe).
 ENV_SKELETON = {
+    "QBIT_PATH": "C:/Program Files/qBittorrent/qbittorrent.exe",
+    "RESTART_ENABLED": False,
     "QBIT_USERNAME": "your_qbittorent_username_here",
     "QBIT_PASSWORD": "your_qbittorent_password_here",
     "PROTON_LOG_PATH": "C:/Users/your_user_name/AppData/Local/Proton/Proton VPN/Logs/client-logs.txt",

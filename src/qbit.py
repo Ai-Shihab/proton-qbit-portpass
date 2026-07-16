@@ -1,5 +1,6 @@
 import logging
 import qbittorrentapi
+import subprocess,time
 
 log = logging.getLogger(__name__)
 
@@ -19,3 +20,12 @@ def current_port(client):
 def set_port(client, port):
     client.app.set_preferences({"listen_port": port})
     log.info("Updated qBittorrent listen_port -> %s", port)
+
+def restart_qbit(client,path):
+    client.app.shutdown()
+    subprocess.Popen([
+        path,
+        "--no-splash"
+    ])
+    time.sleep(10)
+    client.auth_log_in()
