@@ -1,8 +1,7 @@
 import os
 import sys
-import time,psutil
+import time
 import logging
-import subprocess
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
@@ -51,19 +50,6 @@ def build_client():
         password=os.getenv("QBIT_PASSWORD"),
     )
 
-def qbit_exit(timeout=60):
-    start = time.time()
-
-    while time.time() - start < timeout:
-        if not any(
-            p.info["name"] and p.info["name"].lower() == "qbittorrent.exe"
-            for p in psutil.process_iter(["name"])
-        ):
-            return True
-
-        time.sleep(0.5)
-
-    return False
 
 def main():
     check_env()
