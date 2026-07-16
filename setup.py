@@ -37,7 +37,7 @@ create_env_file()
 
 setup(
     name="qbit-proton-portpass",
-    version="1.0.0",
+    version="1.1.0",
     description="Syncs qBittorrent's listen port with ProtonVPN's forwarded port",
     py_modules=["main", "proton", "qbit"],
     install_requires=requirements,

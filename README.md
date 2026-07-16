@@ -13,6 +13,7 @@ ProtonVPN periodically rotates the forwarded port it assigns you (roughly once a
 - Self-healing: unhandled errors trigger an automatic restart with backoff instead of leaving the service dead
 - Rotating log file, so disk usage stays bounded even running 24/7
 - Runs silently at logon via Windows Task Scheduler — no visible console window
+- Automatic restart on port update which kills the delay inherent from port change
 
 ## Requirements
 
@@ -27,7 +28,8 @@ ProtonVPN periodically rotates the forwarded port it assigns you (roughly once a
 1. Download or clone this repository.
 2. Run as **administrator** `install.ps1`.
 3. Fill out your info in .env
-4. use `start_service.ps1` and `stop_service.ps1` scripts
+4. RESTART_ENABLED=True will restart qbittorrent to kill the delay
+5. use `start_service.ps1` and `stop_service.ps1` scripts
 
 This will:
 - Create a Python virtual environment (`.venv`) in the project folder
