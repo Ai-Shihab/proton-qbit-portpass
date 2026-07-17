@@ -21,29 +21,27 @@ def set_port(client, port):
     client.app.set_preferences({"listen_port": port})
     log.info("Updated qBittorrent listen_port -> %s", port)
 
-def qbit_exit(timeout=60):
-    start = time.time()
-
-    while time.time() - start < timeout:
-        if not any(
-            p.info["name"] and p.info["name"].lower() == "qbittorrent.exe"
-            for p in psutil.process_iter(["name"])
-        ):
-            
-            return True
-
-        time.sleep(0.5)
-
-    return False
 
 def restart_qbit(client,path):
+    proc = None
+    for p in psutil.process_iter(["name"]):
+        if p.info["name"] and p.info["name"].lower() == "qbittorrent.exe":
+            proc = p
+            break
+
+    if proc is None:
+        log.error("qBittorrent is not running")
+    log.info("Shutting down Qbittorrent")
     client.app.shutdown()
-    
-    if qbit_exit():
-        subprocess.Popen([
-            path,
-            "--no-splash"
-        ])
-    time.sleep(10)
-    log.info("qBittorrent restarted")
+
+    # Wait up to 60 s
+    try:
+        proc.wait(timeout=15)   # Wait up to 15 seconds
+    except psutil.TimeoutExpired:
+        log.warning("Graceful Qbit shutdown failed, Killing the process")
+        proc.kill()             # Force kill
+        proc.wait()
+    subprocess.Popen([path])
+    log.info("Qbit restarted")
+    time.sleep(5)
     client.auth_log_in()

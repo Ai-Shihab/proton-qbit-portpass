@@ -66,7 +66,7 @@ def main():
             # Checking VPN status first, regardless of whether a port is configured
             if not proton_status():
                 log.warning("Proton service not running, skipping")
-                time.sleep(30)
+                time.sleep(15)
                 continue
 
             if event is None:
